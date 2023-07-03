@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:weather_app/services/location.dart';
 import '../utilities/constants.dart';
+import '../services/weather.dart';
 
 class LocationScreen extends StatefulWidget {
   LocationScreen(this.locationWeather);
@@ -19,10 +20,22 @@ class _LocationScreenState extends State<LocationScreen> {
   int temperature = 0;
   int condition = 0;
   String city = '';
+  String weatherIcon = '';
+  String message = '';
+  WeatherModel weatherModel = WeatherModel();
   void updateUI(dynamic weatherData) {
+    setState(() {
+      if (weatherData == null) {
+        message = "Unable to fetch data";
+        weatherIcon = 'Error';
+        return;
+      }
+    });
     num temp = weatherData['main']['temp'];
     temperature = temp.toInt();
     condition = weatherData['weather'][0]['id'];
+    weatherIcon = weatherModel.getWeatherIcon(condition);
+    message = weatherModel.getMessage(temperature);
     city = weatherData['name'];
     print(temperature);
   }
@@ -49,7 +62,10 @@ class _LocationScreenState extends State<LocationScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   RawMaterialButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      var weatherData = await weatherModel.getLocationWeather();
+                      updateUI(weatherData);
+                    },
                     child: Icon(
                       Icons.near_me,
                       size: 50.0,
@@ -73,7 +89,7 @@ class _LocationScreenState extends State<LocationScreen> {
                       style: kTempTextStyle,
                     ),
                     Text(
-                      '☀️',
+                      weatherIcon,
                       style: kConditionTextStyle,
                     ),
                   ],
@@ -82,7 +98,7 @@ class _LocationScreenState extends State<LocationScreen> {
               Padding(
                 padding: EdgeInsets.only(right: 15.0),
                 child: Text(
-                  "It's 🍦 time in San Francisco!",
+                  '$message in $city',
                   textAlign: TextAlign.right,
                   style: kMessageTextStyle,
                 ),
